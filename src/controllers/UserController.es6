@@ -12,6 +12,8 @@ export default class UserController extends ControllerBase {
     let router = express.Router();
     app.use('/users', router);
     
+    this.setupMiddleware(router);
+    
     let context = new Context(router, this)
       .get('/', this.requireRole('admin'), this.getAll)
       .get('/:id', this.requireRole('admin'), this.getSingle)
@@ -20,7 +22,9 @@ export default class UserController extends ControllerBase {
       .delete('/:id', this.requireRole('admin'), this.remove)
       .post('/:id/password', this.requireRole('admin'), this.changePassword);
     
-    super(context, app, 'login_user', 'user_id');
+    // don't pass the router, because we need to set up all the routes manually to
+    // modify the behaviour of the update method
+    super(null, app, 'login_user', 'user_id');
   }
   
   

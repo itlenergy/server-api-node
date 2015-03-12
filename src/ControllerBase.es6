@@ -1,5 +1,13 @@
 
+import moment from 'moment';
 
+/**
+ * This class serves as the base class for all controllers except the
+ * AuthenticationController. It contains standard CRUD (Create, Retrieve,
+ * Update and Delete) handlers which are the same for most controllers.  It
+ * also has a few helper methods which return more specialised handlers used by
+ * some controllers.
+ */
 export default class ControllerBase {
   
   constructor(router, app, tableName, pkField) {
@@ -8,6 +16,8 @@ export default class ControllerBase {
     
     // sometimes classes want to do their own set up if they are overriding behaviour
     if (router) {
+      this.setupMiddleware(router.getRouter());
+      
       router
         .get('/', this.requireRole('admin'), this.getAll)
         .get('/:id', this.requireRole('admin'), this.getSingle)
@@ -15,6 +25,14 @@ export default class ControllerBase {
         .put('/', this.requireRole('admin'), this.update)
         .delete('/:id', this.requireRole('admin'), this.remove);
     }
+  }
+  
+  
+  setupMiddleware(router) {
+    router
+      .param('id', this.idParam)
+      .param('mintime', this.timeParam.bind(this, 'mintime'))
+      .param('maxtime', this.timeParam.bind(this, 'maxtime'));
   }
   
   
@@ -42,13 +60,9 @@ export default class ControllerBase {
   async add(request, response) {
     // save the entity
     let entity = await this.table.insert(request.body);
-    this._created(entity, response);
-  }
-  
-  
-  _created(entity, response) {
+    
     // build the URL for the new entity
-    let entityUrl = request.protocol + '://' + request.get('host') + request.originalUrl + '/' + entity.id;
+    let entityUrl = request.protocol + '://' + request.get('host') + request.originalUrl + '/' + entity[this.table.idField];
     
     // send HTTP 201 Created
     response.set('Location', entityUrl);
@@ -95,9 +109,9 @@ export default class ControllerBase {
    */
   requireRole(role) {
     return async function (request, response, next) {
-      if (!request.ticket) {
+      if (!request.token) {
         response.status(401).send();
-      } else if (request.ticket.role !== role) {
+      } else if (request.token.role !== role) {
         response.status(403).send();
       } else {
         next();
@@ -123,18 +137,9 @@ export default class ControllerBase {
   
   
   _getByTimeQuery(timeField, request, response) {
-    let minTime = new Date(request.params.mintime);
-    let maxTime = new Date(request.params.maxtime);
-
-    // check if the parameters are valid
-    if (isNaN(minTime.getTime()) || isNaN(maxTime.getTime())) {
-      response.status(400).json({error: "invalid time in URL"});
-      return null;
-    }
-
     // make a query
     let query = {};
-    query[timeField] = {$gte: minTime, $lte: maxTime};
+    query[timeField] = {$gte: request.params.mintime, $lte: request.params.maxtime};
     return query;
   }
   
@@ -152,7 +157,7 @@ export default class ControllerBase {
       let query = {}
       query[fkField] = request.params.id;
       
-      let items = await pg.table(childTable).find(query);
+      let items = await this.pg.table(childTable).find(query);
       response.json({items});
     };
   }
@@ -171,17 +176,20 @@ export default class ControllerBase {
   
   
   addChildEntity(pkField, childTable, fkField) {
-    if (typeof fkField === 'undefined') fkField = pkField;
-    
     return async function (request, response) {
       // check the entity and bail if it's not valid
-      if (!this._checkChildEntity(request.body, pkField, fkField, response)) return;
+      if (!this._checkChildEntity(request.body, pkField, fkField, request, response)) return;
 
       // save it
-      let entity = await this.table.insert(request.body);
+      let entity = await this.pg.table(childTable).insert(request.body);
       
       // TODO: this sends the wrong Location header
-      this._created(entity, response);
+      // build the URL for the new entity
+    let entityUrl = request.protocol + '://' + request.get('host') + request.originalUrl + '/' + entity[pkField];
+    
+    // send HTTP 201 Created
+    response.set('Location', entityUrl);
+    response.status(201).send();
     };
   }
   
@@ -194,13 +202,15 @@ export default class ControllerBase {
       
       // check all entities
       for (let i = 0; i < entities.length; i++) {
-        if (!this._checkChildEntity(entities[i], pkField, fkField, response))
+        if (!this._checkChildEntity(entities[i], pkField, fkField, request, response))
           return;
       }
       
       // save all the entities
+      let table = this.pg.table(childTable);
+      
       for (let i = 0; i < entities.length; i++) {
-        await this.table.insert(entities[i]);
+        await table.insert(entities[i]);
       }
       
       response.send();
@@ -208,7 +218,7 @@ export default class ControllerBase {
   }
   
   
-  _checkChildEntity(entity, pkField, fkField, response) {
+  _checkChildEntity(entity, pkField, fkField, request, response) {
     // make sure primary key isn't set to prevent conflict
     if (typeof entity[pkField] !== 'undefined') {
       response.status(400).send();
@@ -243,6 +253,39 @@ export default class ControllerBase {
       // get the children
       let items = await this.pg.table(childTable).find(query);
       response.json({items});
+    }
+  }
+  
+  
+  idParam(request, response, next) {
+    if (typeof request.params.id !== 'undefined') {
+      let id = parseInt(request.params.id);
+
+      if (isNaN(id)) {
+        response.status(400).json({error: `expected integer ID, not '${id}'`});
+      } else {
+        request.params.id = id;
+        next();
+      }
+    } else {
+      next();
+    }
+  }
+  
+  timeParam(name, request, response, next) {
+    let date = request.params[name];
+
+    if (typeof date !== 'undefined') {
+      let m = moment(date, 'YYYY-MM-DD HH:mm:ss', true);
+
+      if (!m.isValid()) {
+        response.status(400).json({error: `expected valid ${name}, not '${date}'`});
+      } else {
+        request.params[name] = m.toDate();
+        next();
+      }
+    } else {
+      next();
     }
   }
 }

@@ -16,8 +16,10 @@ export default class SiteController extends ControllerBase {
       .get('/:id/weather', this.requireRole('admin'), this.getChildEntities('weather', 'site_id'))
       .get('/:id/weather/:mintime/:maxtime', this.requireRole('admin'),
         this.getChildEntitiesByTime('weather', 'site_id', 'observation_time'))
-      .post('/:id/weather', this.requireHub, this.addChildEntity('site_id', 'weather'))
-      .put('/:id/weather', this.requireHub, this.addChildEntities('site_id', 'weather'));
+      .post('/:id/weather', this.requireSite, 
+        this.addChildEntity('weather_observation_id', 'weather', 'site_id'))
+      .put('/:id/weather', this.requireSite,
+        this.addChildEntities('weather_observation_id', 'weather', 'site_id'));
     
     super(context, app, 'site');
   }

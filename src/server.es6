@@ -8,7 +8,7 @@ import winston from 'winston';
 import moment from 'moment';
 import path from 'path';
 import jwt from 'jsonwebtoken';
-import PostgresPlus from 'pg-plus';
+import PostgresPlus, {types} from 'pg-plus';
 
 import {version} from '../package.json';
 
@@ -16,9 +16,23 @@ import {version} from '../package.json';
  * Starts the server.
  */
 export function start() {
-  // get app config
   let config = getConfig();
+  let app = getApp(config);
   
+  // start the app listening
+  let port = parseInt(config.listen);
+  
+  if (!isNaN(port)) {
+    app.listen(port);
+    config.logger.info('Listening on port %d', port);
+  } else {
+    app.listen(listen);
+    config.logger.info('Listening on socket file "%s"', config.listen);
+  }
+};
+
+
+export function getApp(config) {
   // set up logger
   config.logger = new winston.Logger({
     transports: [
@@ -39,8 +53,48 @@ export function start() {
   app.set('config', config);
   
   // set up database connection
-  let pg = new PostgresPlus(config.database);
+  setupDb(app);
+  
+  // set up middleware
+  setupMiddleware(app);
+  
+  // require all the controllers
+  let controllersPath = path.join(__dirname, 'controllers');
+  let controllers = fs.readdirSync(controllersPath);
+  
+  for (let i in controllers) {
+    let Controller = require('./controllers/' + controllers[i]);
+    Controller = Controller && Controller.__esModule ? Controller["default"] : Controller;
+    (new Controller(app));
+  }
+  
+  return app;
+};
+
+
+function setupDb(app) {
+  // set up the connection
+  let pg = new PostgresPlus(app.get('config').database);
   app.set('pg', pg);
+  
+  // make timestamps return as strings in the desired format
+  // these constants can be got from the database like so:
+  //   select oid, typname from pg_type where typtype = 'b' order by oid
+  let timestamp_oid = 1184;
+  let timestamptz_oid = 1114;
+  
+  function formatDate(val) {
+    if (val === null) return null;
+    else return moment.utc(val).format('YYYY-MM-DD HH:mm:ss');
+  }
+  
+  types.setTypeParser(timestamp_oid, formatDate);
+  types.setTypeParser(timestamptz_oid, formatDate);
+}
+
+
+function setupMiddleware(app) {
+  let config = app.get('config');
   
   // set up the authentication middleware
   app.use(function middleware(request, response, next) {
@@ -65,28 +119,7 @@ export function start() {
     } else {
       next();
     }
-  })
-  
-  // require all the controllers
-  let controllersPath = path.join(__dirname, 'controllers');
-  let controllers = fs.readdirSync(controllersPath);
-  
-  for (let i in controllers) {
-    let Controller = require('./controllers/' + controllers[i]);
-    Controller = Controller && Controller.__esModule ? Controller["default"] : Controller;
-    (new Controller(app));
-  }
-  
-  // start the app listening
-  let port = parseInt(config.listen);
-  
-  if (!isNaN(port)) {
-    app.listen(port);
-    config.logger.info('Listening on port %d', port);
-  } else {
-    app.listen(listen);
-    config.logger.info('Listening on socket file "%s"', config.listen);
-  }
+  });
 }
 
 
@@ -97,7 +130,7 @@ function getConfig() {
   // read command line options
   commander
     .version(version)
-    .option('--database [connection string]', 'The database connection string', 'postgres://postgres:postgres@172.17.0.2/postgres')
+    .option('--database [connection string]', 'The database connection string', 'postgres://postgres:postgres@localhost/postgres')
     .option('--config [file]', 'Reads these options from a config JSON file')
     .option('--authSecret [secret]', 'Sets the authentication secret', 'secret')
     .option('--listen [value]', 'Listen on port or socket [3000]', '3000')

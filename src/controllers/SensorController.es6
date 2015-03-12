@@ -15,8 +15,10 @@ export default class SensorController extends ControllerBase {
       .get('/:id/measurements', this.requireRole('admin'), this.getChildEntities('measurement', 'sensor_id'))
       .get('/:id/measurements/:mintime/:maxtime', this.requireRole('admin'),
         this.getChildEntitiesByTime('measurement', 'sensor_id', 'observation_time'))
-      .post('/:id/measurements', this.requireHub, this.addChildEntity('sensor_id', 'measurement'))
-      .put('/:id/measurements', this.requireHub, this.addChildEntities('sensor_id', 'measurement'));
+      .post('/:id/measurements', this.requireHub,
+        this.addChildEntity('measurement_id', 'measurement', 'sensor_id'))
+      .put('/:id/measurements', this.requireHub,
+        this.addChildEntities('measurement_id', 'measurement', 'sensor_id'));
     
     super(context, app, 'sensor');
   }
