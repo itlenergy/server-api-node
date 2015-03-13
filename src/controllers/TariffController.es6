@@ -12,14 +12,14 @@ export default class TariffController extends ControllerBase {
     app.use('/tariffs', router);
     
     let context = new Context(router, this)
-      .get('/:id/blocks', this.requireRole('admin'), this.getChildEntities('tariff_block', 'tariff_id'))
+      .get('/:id/blocks', this.requireRole('admin'), this.getChildEntities('tariff_block', 'tariffId'))
       .post('/:id/blocks', this.requireRole('admin'),
-        this.addChildEntity('tariff_block_id', 'tariff_block', 'tariff_id'))
+        this.addChildEntity('tariffBlockId', 'tariff_block', 'tariffId'))
       .put('/:id/blocks', this.requireRole('admin'),
-        this.addChildEntities('tariff_block_id', 'tariff_block', 'tariff_id'))
+        this.addChildEntities('tariffBlockId', 'tariff_block', 'tariffId'))
       .get('/:id/blocks/:mintime/:maxtime', this.requireRole('admin'),
-        this.getChildEntitiesByTime('tariff_block', 'tariff_id', 'start_time'));
+        this.getChildEntitiesByTime('tariff_block', 'tariffId', 'startTime'));
     
-    super(context, app, 'tarrif_block');
+    super(context, app, 'tarrif', 'tariffId');
   }
 }

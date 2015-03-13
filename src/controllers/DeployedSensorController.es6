@@ -12,6 +12,6 @@ export default class DeployedSensorController extends ControllerBase {
     app.use('/deployedsensors', router);
     
     let context = new Context(router, this);
-    super(context, app, 'deployed_sensor', 'type_id');
+    super(context, app, 'deployed_sensor', 'typeId');
   }
 }

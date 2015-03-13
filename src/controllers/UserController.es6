@@ -24,7 +24,7 @@ export default class UserController extends ControllerBase {
     
     // don't pass the router, because we need to set up all the routes manually to
     // modify the behaviour of the update method
-    super(null, app, 'login_user', 'user_id');
+    super(null, app, 'login_user', 'userId');
   }
   
   

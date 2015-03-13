@@ -12,8 +12,8 @@ export default class MeasurementController extends ControllerBase {
     app.use('/measurements', router);
     
     let context = new Context(router, this)
-      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('observation_time'));
+      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('observationTime'));
     
-    super(context, app, 'measurement');
+    super(context, app, 'measurement', 'measurementId');
   }
 }

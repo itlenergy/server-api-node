@@ -12,7 +12,7 @@ export default class ControllerBase {
   
   constructor(router, app, tableName, pkField) {
     this.pg = app.get('pg');
-    this.table = this.pg.table(tableName, pkField || (tableName + '_id'));
+    this.table = this.pg.table(tableName, {id: pkField, case: 'snake'});
     
     // sometimes classes want to do their own set up if they are overriding behaviour
     if (router) {
@@ -110,7 +110,8 @@ export default class ControllerBase {
   requireRole(role) {
     return async function (request, response, next) {
       if (!request.token) {
-        response.status(401).send();
+        // this should really be 401, but keeping 403 in the interests of backwards compatibility
+        response.status(403).send();
       } else if (request.token.role !== role) {
         response.status(403).send();
       } else {
@@ -157,7 +158,7 @@ export default class ControllerBase {
       let query = {}
       query[fkField] = request.params.id;
       
-      let items = await this.pg.table(childTable).find(query);
+      let items = await this.pg.table(childTable, {case: 'snake'}).find(query);
       response.json({items});
     };
   }
@@ -181,7 +182,7 @@ export default class ControllerBase {
       if (!this._checkChildEntity(request.body, pkField, fkField, request, response)) return;
 
       // save it
-      let entity = await this.pg.table(childTable).insert(request.body);
+      let entity = await this.pg.table(childTable, {case: 'snake'}).insert(request.body);
       
       // TODO: this sends the wrong Location header
       // build the URL for the new entity
@@ -207,7 +208,7 @@ export default class ControllerBase {
       }
       
       // save all the entities
-      let table = this.pg.table(childTable);
+      let table = this.pg.table(childTable, {case: 'snake'});
       
       for (let i = 0; i < entities.length; i++) {
         await table.insert(entities[i]);
@@ -251,7 +252,7 @@ export default class ControllerBase {
       query[fkField] = request.params.id;
 
       // get the children
-      let items = await this.pg.table(childTable).find(query);
+      let items = await this.pg.table(childTable, {case: 'snake'}).find(query);
       response.json({items});
     }
   }
@@ -271,6 +272,7 @@ export default class ControllerBase {
       next();
     }
   }
+  
   
   timeParam(name, request, response, next) {
     let date = request.params[name];

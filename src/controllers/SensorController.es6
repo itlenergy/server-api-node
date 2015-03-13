@@ -12,13 +12,13 @@ export default class SensorController extends ControllerBase {
     app.use('/sensors', router);
     
     let context = new Context(router, this)
-      .get('/:id/measurements', this.requireRole('admin'), this.getChildEntities('measurement', 'sensor_id'))
+      .get('/:id/measurements', this.requireRole('admin'), this.getChildEntities('measurement', 'sensorId'))
       .get('/:id/measurements/:mintime/:maxtime', this.requireRole('admin'),
-        this.getChildEntitiesByTime('measurement', 'sensor_id', 'observation_time'))
+        this.getChildEntitiesByTime('measurement', 'sensorId', 'observationTime'))
       .post('/:id/measurements', this.requireHub,
-        this.addChildEntity('measurement_id', 'measurement', 'sensor_id'))
+        this.addChildEntity('measurementId', 'measurement', 'sensorId'))
       .put('/:id/measurements', this.requireHub,
-        this.addChildEntities('measurement_id', 'measurement', 'sensor_id'));
+        this.addChildEntities('measurementId', 'measurement', 'sensorId'));
     
     super(context, app, 'sensor');
   }
@@ -33,10 +33,10 @@ export default class SensorController extends ControllerBase {
     //  - user is hub and is related to the sensor's hub ID
     if (request.token !== null &&
         (request.token.role === 'admin' ||
-        (request.token.role === 'hub' && request.token.related_id === sensor.hub_id))) {
+        (request.token.role === 'hub' && request.token.relatedId === sensor.hubId))) {
       next();
     } else {
-      response.status(401).send();
+      response.status(403).send();
     }
   }
 }

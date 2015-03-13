@@ -12,8 +12,8 @@ export default class ActuationController extends ControllerBase {
     app.use('/actuations', router);
     
     let context = new Context(router, this)
-      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('actuation_time'));
+      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('actuationTime'));
     
-    super(context, app, 'actuations', 'actuation_id');
+    super(context, app, 'actuations', 'actuationId');
   }
 }

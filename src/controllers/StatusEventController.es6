@@ -12,6 +12,6 @@ export default class StatusEventController extends ControllerBase {
     app.use('/events', router);
     
     let context = new Context(router, this);
-    super(context, app, 'status_events', 'status_id');
+    super(context, app, 'status_events', 'statusId');
   }
 }

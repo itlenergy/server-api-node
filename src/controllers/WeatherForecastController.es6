@@ -12,8 +12,8 @@ export default class WeatherForecastController extends ControllerBase {
     app.use('/weather_forecast', router);
     
     let context = new Context(router, this)
-      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('time_observed'));
+      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('timeObserved'));
     
-    super(context, app, 'weather_forecast');
+    super(context, app, 'weather_forecast', 'weatherForecastId');
   }
 }

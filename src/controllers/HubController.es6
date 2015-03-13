@@ -12,9 +12,9 @@ export default class HubController extends ControllerBase {
     app.use('/hubs', router);
     
     let context = new Context(router, this)
-      .get('/:id/logs', this.requireRole('admin'), this.getChildEntities('hub_log', 'hub_id'))
-      .get('/:id/sensors', this.requireRole('admin'), this.getChildEntities('sensor', 'hub_id'));
+      .get('/:id/logs', this.requireRole('admin'), this.getChildEntities('hub_log', 'hubId'))
+      .get('/:id/sensors', this.requireRole('admin'), this.getChildEntities('sensor', 'hubId'));
     
-    super(context, app, 'hub');
+    super(context, app, 'hub', 'hubId');
   }
 }

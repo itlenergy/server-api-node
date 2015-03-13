@@ -12,6 +12,6 @@ export default class TariffBlockController extends ControllerBase {
     app.use('/tariff_blocks', router);
     
     let context = new Context(router, this);
-    super(context, app, 'tariff_block');
+    super(context, app, 'tariff_block', 'tariffBlockId');
   }
 }

@@ -12,8 +12,8 @@ export default class ElectricalLoadForecastController extends ControllerBase {
     app.use('/electrical_load_forecast', router);
     
     let context = new Context(router, this)
-      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('time_observed'));
+      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('timeObserved'));
     
-    super(context, app, 'electrical_load_forecast', 'electrical_forecast_id');
+    super(context, app, 'electrical_load_forecast', 'electricalForecastId');
   }
 }

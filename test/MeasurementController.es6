@@ -10,6 +10,7 @@ var pg = app.get('pg');
 
 describe('MeasurementController', function () {
   var ticket;
+  var measurements = pg.table('measurement', {id: 'measurementId', case: 'snake'});
   
   before(async function () {
     await setupData();
@@ -34,9 +35,9 @@ describe('MeasurementController', function () {
       expect(response.body.items).to.have.length(11);
       
       let m = response.body.items[0];
-      expect(m.measurement_id).to.exist;
-      expect(m.sensor_id).to.exist;
-      expect(m.observation_time).to.exist;
+      expect(m.measurementId).to.exist;
+      expect(m.sensorId).to.exist;
+      expect(m.observationTime).to.exist;
       expect(m.observation).to.exist;
     });
   });
@@ -44,11 +45,11 @@ describe('MeasurementController', function () {
   describe('getSingle', function () {
     it('should return a single entity', async function () {
       // pick an ID
-      let m = await pg.table('measurement').findOne();
-      m.observation_time = moment.utc(m.observation_time).format('YYYY-MM-DD HH:mm:ss');
+      let m = await pg.table('measurement', {case: 'snake'}).findOne();
+      m.observationTime = moment.utc(m.observationTime).format('YYYY-MM-DD HH:mm:ss');
       
       let response = await supertest(app)
-        .get(`/measurements/${m.measurement_id}?sgauth=${ticket}`)
+        .get(`/measurements/${m.measurementId}?sgauth=${ticket}`)
         .expect(200);
       
       expect(response.body).to.deep.equal(m);
@@ -58,11 +59,11 @@ describe('MeasurementController', function () {
   describe('add', function () {
     it('should add the entity', async function () {
       // get a random sensor
-      let sensor = await pg.table('sensor').findOne();
+      let sensor = await pg.table('sensor', {case: 'snake'}).findOne();
       
       let m = {
-        sensor_id: sensor.sensor_id,
-        observation_time: '2015-03-12 17:45:00',
+        sensorId: sensor.sensorId,
+        observationTime: '2015-03-12 17:45:00',
         observation: 3.24
       };
       
@@ -76,21 +77,20 @@ describe('MeasurementController', function () {
       expect(id).to.exist;
       id = parseInt(id);
       
-      m.measurement_id = id;
-      expect(await pg.table('measurement', 'measurement_id').findOne(id)).to.deep.equal(m);
+      m.measurementId = id;
+      expect(await measurements.findOne(id)).to.deep.equal(m);
     });
   });
   
   describe('update', function () {
     it('should update the entity', async function () {
       // get a random measurement
-      let measurements = pg.table('measurement', 'measurement_id');
       let measurement = await measurements.findOne();
       
       let updated = {
-        measurement_id: measurement.measurement_id,
-        sensor_id: measurement.sensor_id,
-        observation_time: '2015-03-12 18:07:00',
+        measurementId: measurement.measurementId,
+        sensorId: measurement.sensorId,
+        observationTime: '2015-03-12 18:07:00',
         observation: 0.33
       };
       
@@ -99,7 +99,7 @@ describe('MeasurementController', function () {
         .send(updated)
         .expect(204);
       
-      measurement = await measurements.findOne(measurement.measurement_id);
+      measurement = await measurements.findOne(measurement.measurementId);
       expect(measurement).to.deep.equal(updated);
     });
   });
@@ -107,14 +107,13 @@ describe('MeasurementController', function () {
   describe('remove', function () {
     it('should remove the entity', async function () {
        // get a random measurement
-      let measurements = pg.table('measurement', 'measurement_id');
       let measurement = await measurements.findOne();
       
       let response = await supertest(app)
-        .delete(`/measurements/${measurement.measurement_id}?sgauth=${ticket}`)
+        .delete(`/measurements/${measurement.measurementId}?sgauth=${ticket}`)
         .expect(204);
       
-      expect(await measurements.findOne(measurement.measurement_id)).to.not.exist;
+      expect(await measurements.findOne(measurement.measurementId)).to.not.exist;
     });
   });
   
@@ -126,11 +125,11 @@ describe('MeasurementController', function () {
       
       expect(response.body.items).to.exist;
       
-      let measurements = response.body.items;
-      expect(measurements).to.have.length(3);
-      expect(measurements[0].observation).to.equal(0.09);
-      expect(measurements[1].observation).to.equal(0.1);
-      expect(measurements[2].observation).to.equal(0.12);
+      let m = response.body.items;
+      expect(m).to.have.length(3);
+      expect(m[0].observation).to.equal(0.09);
+      expect(m[1].observation).to.equal(0.1);
+      expect(m[2].observation).to.equal(0.12);
     });
   });
 });

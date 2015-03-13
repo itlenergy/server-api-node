@@ -12,16 +12,16 @@ export default class SiteController extends ControllerBase {
     app.use('/sites', router);
     
     let context = new Context(router, this)
-      .get('/:id/houses', this.requireRole('admin'), this.getChildEntities('house', 'site_id'))
-      .get('/:id/weather', this.requireRole('admin'), this.getChildEntities('weather', 'site_id'))
+      .get('/:id/houses', this.requireRole('admin'), this.getChildEntities('house', 'siteId'))
+      .get('/:id/weather', this.requireRole('admin'), this.getChildEntities('weather', 'siteId'))
       .get('/:id/weather/:mintime/:maxtime', this.requireRole('admin'),
-        this.getChildEntitiesByTime('weather', 'site_id', 'observation_time'))
+        this.getChildEntitiesByTime('weather', 'siteId', 'observationTime'))
       .post('/:id/weather', this.requireSite, 
-        this.addChildEntity('weather_observation_id', 'weather', 'site_id'))
+        this.addChildEntity('weatherObservationId', 'weather', 'siteId'))
       .put('/:id/weather', this.requireSite,
-        this.addChildEntities('weather_observation_id', 'weather', 'site_id'));
+        this.addChildEntities('weatherObservationId', 'weather', 'siteId'));
     
-    super(context, app, 'site');
+    super(context, app, 'site', 'siteId');
   }
   
   
@@ -31,10 +31,10 @@ export default class SiteController extends ControllerBase {
     //  - user is a weather-reporter and is related to the site id
     if (request.token !== null &&
         (request.token.role === 'admin' ||
-        (request.token.role === 'weather-reporter' && request.token.related_id === request.params.id))) {
+        (request.token.role === 'weather-reporter' && request.token.relatedId === request.params.id))) {
       next();
     } else {
-      response.status(401).send();
+      response.status(403).send();
     }
   }
 }

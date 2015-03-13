@@ -15,7 +15,7 @@ export default class AuthenticationController {
   constructor(app) {
     // get the table
     let pg = app.get('pg');
-    this.table = pg.table('login_user', 'user_id');
+    this.table = pg.table('login_user', {id: 'userId', case: 'snake'});
     
     // get auth config
     this.authSecret = app.get('config').authSecret;
@@ -60,7 +60,7 @@ export default class AuthenticationController {
   sendToken(user, response) {
     let token = {
       // called 'ticket' rather than 'token' for backwards compatibility
-      ticket: jwt.sign({username: user.username, role: user.role, related_id: user.related_id}, this.authSecret, {expiresInMinutes: tokenExpiresAfterMins})
+      ticket: jwt.sign({username: user.username, role: user.role, relatedId: user.relatedId}, this.authSecret, {expiresInMinutes: tokenExpiresAfterMins})
     };
     
     response.json(token);

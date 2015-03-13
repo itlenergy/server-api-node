@@ -12,8 +12,8 @@ export default class ForecastStatusController extends ControllerBase {
     app.use('/forecast_status', router);
     
     let context = new Context(router, this)
-      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('time_forecast_for'));
+      .get('/:mintime/:maxtime', this.requireRole('admin'), this.getByTime('timeForecastFor'));
     
-    super(context, app, 'forecast_status');
+    super(context, app, 'forecast_status', 'forecastStatusId');
   }
 }

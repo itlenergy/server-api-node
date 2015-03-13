@@ -97,7 +97,7 @@ function setupMiddleware(app) {
   let config = app.get('config');
   
   // set up the authentication middleware
-  app.use(function middleware(request, response, next) {
+  app.use(function (request, response, next) {
     // get the token and verify it
     if (request.query.sgauth) {
       jwt.verify(request.query.sgauth, config.authSecret, function (err, token) {
@@ -119,6 +119,15 @@ function setupMiddleware(app) {
     } else {
       next();
     }
+  });
+  
+  // set up CORS (Cross-Origin Resource Sharing)
+  // i.e., let the API be used by websites on domains other than the one it is hosted on
+  app.use(function (request, response, next) {
+    response.set('Access-Control-Allow-Origin', '*');
+    response.set('Access-Control-Allow-Headers', 'Origin, content-Type, Accept, X-Requested-With');
+    response.set('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+    next();
   });
 }
 
