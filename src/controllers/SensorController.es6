@@ -20,7 +20,7 @@ export default class SensorController extends ControllerBase {
       .put('/:id/measurements', this.requireHub,
         this.addChildEntities('measurementId', 'measurement', 'sensorId'));
     
-    super(context, app, 'sensor');
+    super(context, app, 'sensor', 'sensorId');
   }
   
   
@@ -31,7 +31,7 @@ export default class SensorController extends ControllerBase {
     // request succeeds if:
     //  - user is admin, or
     //  - user is hub and is related to the sensor's hub ID
-    if (request.token !== null &&
+    if (request.token != null &&
         (request.token.role === 'admin' ||
         (request.token.role === 'hub' && request.token.relatedId === sensor.hubId))) {
       next();

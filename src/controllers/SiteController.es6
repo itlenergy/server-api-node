@@ -19,7 +19,8 @@ export default class SiteController extends ControllerBase {
       .post('/:id/weather', this.requireSite, 
         this.addChildEntity('weatherObservationId', 'weather', 'siteId'))
       .put('/:id/weather', this.requireSite,
-        this.addChildEntities('weatherObservationId', 'weather', 'siteId'));
+        this.addChildEntities('weatherObservationId', 'weather', 'siteId'))
+      .get('/:id/houses', this.requireRole('admin'), this.getChildEntities('house', 'siteId'));
     
     super(context, app, 'site', 'siteId');
   }

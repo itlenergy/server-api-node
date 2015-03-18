@@ -96,10 +96,19 @@ function setupDb(app) {
 function setupMiddleware(app) {
   let config = app.get('config');
   
+  // set up CORS (Cross-Origin Resource Sharing)
+  // i.e., let the API be used by websites on domains other than the one it is hosted on
+  app.use(function (request, response, next) {
+    response.set('Access-Control-Allow-Origin', '*');
+    response.set('Access-Control-Allow-Headers', 'Origin, content-Type, Accept, X-Requested-With');
+    response.set('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+    next();
+  });
+  
   // set up the authentication middleware
   app.use(function (request, response, next) {
     // get the token and verify it
-    if (request.query.sgauth) {
+    if (request.query.sgauth && request.method !== 'OPTIONS') {
       jwt.verify(request.query.sgauth, config.authSecret, function (err, token) {
         if (err) {
           // there was an error verifying the token
@@ -119,15 +128,6 @@ function setupMiddleware(app) {
     } else {
       next();
     }
-  });
-  
-  // set up CORS (Cross-Origin Resource Sharing)
-  // i.e., let the API be used by websites on domains other than the one it is hosted on
-  app.use(function (request, response, next) {
-    response.set('Access-Control-Allow-Origin', '*');
-    response.set('Access-Control-Allow-Headers', 'Origin, content-Type, Accept, X-Requested-With');
-    response.set('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
-    next();
   });
 }
 
